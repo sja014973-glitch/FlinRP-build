@@ -82,6 +82,29 @@ jobs:
             echo "INCLUDE_TEST_FAILED: foreach (exit $rc)"
             exit 1
           fi
+          echo "TESTING_INCLUDE: foreach Iter_Add"
+          cat > /tmp/test_foreach_add.pwn <<'PAWN'
+#include <a_samp>
+#define FOREACH_I_PlayerPlayersStream
+#define FOREACH_I_PlayerVehiclesStream
+#include <foreach>
+#define MAX_JOBS 20
+new Iterator:gJobPlayers[MAX_JOBS]<MAX_PLAYERS>;
+main()
+{
+    Iter_Init(gJobPlayers);
+    Iter_Add(gJobPlayers[1], 0);
+    return 1;
+}
+PAWN
+          if "$pawncc" /tmp/test_foreach_add.pwn -i../pawno/include -i. -o/tmp/test_foreach_add.amx; then
+            test -s /tmp/test_foreach_add.amx
+            echo "ITER_ADD_TEST_OK"
+          else
+            rc=$?
+            echo "ITER_ADD_TEST_FAILED: exit $rc"
+            exit 1
+          fi
           echo "Starting GDB diagnostic for FlinRP..."
           gdb --batch --quiet \
             -ex "set pagination off" \
