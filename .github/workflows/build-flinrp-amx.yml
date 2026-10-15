@@ -55,6 +55,23 @@ jobs:
           test -s /tmp/pawn_smoke.amx
           echo "PAWN_SMOKE_TEST_OK"
           cd source/gamemodes
+          include_failures=0
+          for inc in a_samp a_mysql streamer; do
+            printf '#include <%s>\nmain() { return 1; }\n' "$inc" > "/tmp/test_${inc}.pwn"
+            echo "TESTING_INCLUDE: $inc"
+            if "$pawncc" "/tmp/test_${inc}.pwn" -i../pawno/include -i. -o"/tmp/test_${inc}.amx"; then
+              echo "INCLUDE_TEST_OK: $inc"
+            else
+              rc=$?
+              echo "INCLUDE_TEST_FAILED: $inc (exit $rc)"
+              include_failures=$((include_failures + 1))
+            fi
+          done
+          if [ "$include_failures" -ne 0 ]; then
+            echo "STOPPING_BEFORE_MAIN_SOURCE: include tests failed"
+            exit 1
+          fi
+          echo "ALL_INCLUDE_TESTS_OK"
           "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx
           test -s ../../gm.amx
 
