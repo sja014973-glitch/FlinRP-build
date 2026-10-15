@@ -72,6 +72,16 @@ jobs:
             exit 1
           fi
           echo "ALL_INCLUDE_TESTS_OK"
+          echo "TESTING_INCLUDE: foreach with source macros"
+          printf '#include <a_samp>\n#define FOREACH_I_PlayerPlayersStream\n#define FOREACH_I_PlayerVehiclesStream\n#include <foreach>\nmain() { return 1; }\n' > /tmp/test_foreach.pwn
+          if "$pawncc" /tmp/test_foreach.pwn -i../pawno/include -i. -o/tmp/test_foreach.amx; then
+            test -s /tmp/test_foreach.amx
+            echo "INCLUDE_TEST_OK: foreach"
+          else
+            rc=$?
+            echo "INCLUDE_TEST_FAILED: foreach (exit $rc)"
+            exit 1
+          fi
           echo "Starting GDB diagnostic for FlinRP..."
           gdb --batch --quiet \
             -ex "set pagination off" \
