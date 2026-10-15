@@ -130,6 +130,52 @@ jobs:
             echo "ITER_LINE_TEST_COMPILE_FAILED: exit $rc"
           fi
           rm -f main_iter_test.pwn
+          echo "TESTING_ITER_ADDINTERNAL_STUB"
+          mkdir -p /tmp/flin-foreach-test
+          python3 - <<'PYTEST'
+from pathlib import Path
+
+src = Path("../pawno/include/foreach.inc").read_text()
+signature = "stock Iter_AddInternal(&count, array[], value, size)"
+start = src.find(signature)
+if start < 0:
+    raise SystemExit("ERROR: Iter_AddInternal signature not found")
+
+brace = src.find("{", start)
+if brace < 0:
+    raise SystemExit("ERROR: function body not found")
+
+depth = 0
+end = -1
+for i in range(brace, len(src)):
+    if src[i] == "{":
+        depth += 1
+    elif src[i] == "}":
+        depth -= 1
+        if depth == 0:
+            end = i + 1
+            break
+
+if end < 0:
+    raise SystemExit("ERROR: function body end not found")
+
+replacement = signature + "\n{\n    return 0;\n}"
+Path("/tmp/flin-foreach-test/foreach.inc").write_text(
+    src[:start] + replacement + src[end:]
+)
+print("ITER_ADDINTERNAL_STUB_READY")
+PYTEST
+
+          if "$pawncc" main.pwn -d0 -i/tmp/flin-foreach-test -i../pawno/include -i. -o/tmp/gm_iter_stub.amx; then
+            if test -s /tmp/gm_iter_stub.amx; then
+              echo "ITER_ADDINTERNAL_STUB_COMPILE_OK"
+            else
+              echo "ITER_ADDINTERNAL_STUB_OUTPUT_MISSING"
+            fi
+          else
+            rc=$?
+            echo "ITER_ADDINTERNAL_STUB_COMPILE_FAILED: exit $rc"
+          fi
           echo "Starting GDB diagnostic for FlinRP..."
           gdb --batch --quiet \
             -ex "set pagination off" \
