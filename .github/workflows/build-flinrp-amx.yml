@@ -1,0 +1,61 @@
+name: Build FlinRP AMX (Linux)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pawn-compile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl tar unzip coreutils
+
+      - name: Extract source ZIP
+        run: |
+          test -s FlinRP_Linux_BUILD_PREP_v10_GITHUB_ACTIONS.zip
+          mkdir -p source
+          unzip -oq FlinRP_Linux_BUILD_PREP_v10_GITHUB_ACTIONS.zip -d source
+          test -s source/gamemodes/main.pwn
+          test -s source/pawno/include/a_samp.inc
+          test -s source/pawno/include/a_mysql.inc
+          test -s source/pawno/include/streamer.inc
+
+      - name: Download Pawn compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/pawn-lang/compiler/releases/download/v3.10.10/pawnc-3.10.10-linux.tar.gz"
+          expected="9bbb1df6e933318fce1fa61951e4196b70613c637a5a1d4c96937e147c18468d"
+          curl -fL --retry 2 "$url" -o /tmp/pawnc.tar.gz
+          echo "$expected  /tmp/pawnc.tar.gz" | sha256sum -c -
+          mkdir -p /tmp/pawnc
+          tar -xzf /tmp/pawnc.tar.gz -C /tmp/pawnc
+          find /tmp/pawnc -type f -name pawncc -perm -u+x -print -quit > /tmp/pawncc_path
+          test -s /tmp/pawncc_path
+
+      - name: Compile FlinRP
+        shell: bash
+        run: |
+          set -euo pipefail
+          pawncc="$(cat /tmp/pawncc_path)"
+          cd source/gamemodes
+          "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx
+          test -s ../../gm.amx
+
+      - name: Upload compiled AMX
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flinrp-pawn-build
+          path: gm.amx
+          if-no-files-found: warn
+          retention-days: 7
