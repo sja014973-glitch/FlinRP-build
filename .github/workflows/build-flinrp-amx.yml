@@ -17,7 +17,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl tar unzip coreutils
+          sudo apt-get install -y curl tar unzip coreutils gdb
 
       - name: Extract source ZIP
         run: |
@@ -72,7 +72,18 @@ jobs:
             exit 1
           fi
           echo "ALL_INCLUDE_TESTS_OK"
-          "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx
+          echo "Starting GDB diagnostic for FlinRP..."
+          gdb --batch --quiet \
+            -ex "set pagination off" \
+            -ex run \
+            -ex "thread apply all bt full" \
+            --args "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx \
+            > /tmp/pawn-gdb.log 2>&1 || true
+          cat /tmp/pawn-gdb.log
+          if grep -q "Program received signal SIGSEGV" /tmp/pawn-gdb.log; then
+            echo "GDB_CONFIRMED_COMPILER_CRASH"
+            exit 1
+          fi
           test -s ../../gm.amx
 
       - name: Upload compiled AMX
