@@ -46,6 +46,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          lib_dir="$(find /tmp/pawnc -type f -name libpawnc.so -print -quit | xargs -r dirname)"
+          test -n "$lib_dir"
+          export LD_LIBRARY_PATH="$lib_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           pawncc="$(cat /tmp/pawncc_path)"
           cd source/gamemodes
           "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx
