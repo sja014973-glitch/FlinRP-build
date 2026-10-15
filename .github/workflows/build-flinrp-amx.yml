@@ -105,6 +105,17 @@ jobs:
             echo "ITER_ADD_TEST_FAILED: exit $rc"
             exit 1
           fi
+          echo "TESTING_FULL_COMPILE_WITHOUT_DEBUG"
+          if "$pawncc" main.pwn -d0 -i../pawno/include -i. -o/tmp/gm_nodebug.amx; then
+            if test -s /tmp/gm_nodebug.amx; then
+              echo "FULL_NODEBUG_COMPILE_OK"
+            else
+              echo "FULL_NODEBUG_OUTPUT_MISSING"
+            fi
+          else
+            rc=$?
+            echo "FULL_NODEBUG_COMPILE_FAILED: exit $rc"
+          fi
           echo "Starting GDB diagnostic for FlinRP..."
           gdb --batch --quiet \
             -ex "set pagination off" \
