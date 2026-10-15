@@ -116,6 +116,20 @@ jobs:
             rc=$?
             echo "FULL_NODEBUG_COMPILE_FAILED: exit $rc"
           fi
+          echo "TESTING_COPY_WITH_LINE_52549_COMMENTED"
+          cp main.pwn main_iter_test.pwn
+          sed -i '52549s/^/\/\//' main_iter_test.pwn
+          if "$pawncc" main_iter_test.pwn -d0 -i../pawno/include -i. -o/tmp/gm_iter_test.amx; then
+            if test -s /tmp/gm_iter_test.amx; then
+              echo "ITER_LINE_TEST_COMPILE_OK"
+            else
+              echo "ITER_LINE_TEST_OUTPUT_MISSING"
+            fi
+          else
+            rc=$?
+            echo "ITER_LINE_TEST_COMPILE_FAILED: exit $rc"
+          fi
+          rm -f main_iter_test.pwn
           echo "Starting GDB diagnostic for FlinRP..."
           gdb --batch --quiet \
             -ex "set pagination off" \
