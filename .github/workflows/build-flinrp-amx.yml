@@ -50,6 +50,10 @@ jobs:
           test -n "$lib_dir"
           export LD_LIBRARY_PATH="$lib_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           pawncc="$(cat /tmp/pawncc_path)"
+          printf 'main() { return 1; }\n' > /tmp/pawn_smoke.pwn
+          "$pawncc" /tmp/pawn_smoke.pwn -o/tmp/pawn_smoke.amx
+          test -s /tmp/pawn_smoke.amx
+          echo "PAWN_SMOKE_TEST_OK"
           cd source/gamemodes
           "$pawncc" main.pwn -i../pawno/include -i. -o../../gm.amx
           test -s ../../gm.amx
